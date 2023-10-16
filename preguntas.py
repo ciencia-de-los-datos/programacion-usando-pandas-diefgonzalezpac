@@ -165,13 +165,19 @@ def pregunta_10():
     3   D                  1:2:3:5:5:7
     4   E  1:1:2:3:3:4:5:5:5:6:7:8:8:9
     """
-    #print(tbl0.groupby("_c1")["_c2"].apply(lambda x: ":".join(x.astype(str))))
+    
     table_result = tbl0.groupby("_c1")["_c2"].apply(lambda x: ":".join(x.astype(str)))
     table_result = table_result.reset_index()
-    #print(table_result)
-    table_result.columns = ["_c0", "_c1"]
-    table_result = table_result.so
-    print(table_result)
+    
+    def order_numbers(string):
+        numbers = list(map(int, string.split(':')))
+        sorted_numbers = sorted(numbers)
+        return ':'.join(map(str, sorted_numbers))
+
+    table_result['_c2'] = table_result['_c2'].apply(order_numbers)
+    table_result.index = table_result['_c1']
+    table_result = table_result.drop(columns=['_c1'])
+
     return table_result
 
 
@@ -191,7 +197,17 @@ def pregunta_11():
     38   38      d,e
     39   39    a,d,f
     """
-    return
+    table_result = tbl1.groupby("_c0")["_c4"].apply(lambda x: ",".join(x.astype(str)))
+    table_result = table_result.reset_index()
+    def order_letters(string):
+        sorted_letters = sorted(string.split(','))  
+        return ','.join(sorted_letters)
+    
+    table_result['_c4'] = table_result['_c4'].apply(order_letters)
+
+    
+
+    return table_result
 
 
 def pregunta_12():
@@ -209,7 +225,21 @@ def pregunta_12():
     38   38                    eee:0,fff:9,iii:2
     39   39                    ggg:3,hhh:8,jjj:5
     """
-    return
+    table_result = tbl2
+    
+    def create_new_column(group):
+        
+        new_value = ','.join(f'{a}:' + str(b) for a, b in zip(group["_c5a"], group["_c5b"]))
+        sorted_new_value = ','.join(sorted(new_value.split(','), key=lambda x: x.split(':')[0]))
+        return pd.DataFrame({"_c0": [group["_c0"].iloc[0]], "_c5": [sorted_new_value]})
+
+    
+    result_df = table_result.groupby('_c0').apply(create_new_column).reset_index(drop=True)
+
+    
+    
+    return result_df
+
 
 
 def pregunta_13():
@@ -226,4 +256,10 @@ def pregunta_13():
     E    275
     Name: _c5b, dtype: int64
     """
-    return
+    df_tbl0 = tbl0
+    df_tbl2 = tbl2
+
+    df_tbl = pd.merge(df_tbl0, df_tbl2, on='_c0')
+    result = df_tbl.groupby('_c1')['_c5b'].sum()
+    
+    return result
